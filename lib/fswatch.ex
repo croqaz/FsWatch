@@ -65,7 +65,10 @@ defmodule FsWatch do
         |> List.wrap
       extract_events tail, event ++ events
     else
-      { head, events }
+      path = [head] ++ tail
+        |> Enum.reverse
+        |> Enum.join(" ")
+      { path, events }
     end
   end
 
