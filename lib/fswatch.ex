@@ -27,7 +27,10 @@ defmodule FsWatch do
       |> String.replace_trailing("\n", "")
       |> String.split("\n")
       |> Enum.map(&extract_events(&1))
-      |> Enum.each(fn(data) -> config.callback.(data) end)
+      |> Enum.each(fn(data) ->
+        IO.puts(":: watcher :: #{inspect data}")
+        config.callback.(data)
+      end)
     {:noreply, config}
   end
 
@@ -40,7 +43,7 @@ defmodule FsWatch do
 
   @spec start_watcher(list) :: none
   defp start_watcher(args) do
-    folder = args[:folder] |> Path.expand
+    folder = args[:folder]
     Porcelain.spawn_shell "fswatch -xr #{folder}", out: {:send, self}
     Logger.info ~s(Started watching "#{folder}" folder for changes.)
   end
