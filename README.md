@@ -1,4 +1,5 @@
-# FsWatch
+
+# FsWatch :file_folder: :watch:
 
 Dead easy file and folder watcher based on `fswatch`.
 
