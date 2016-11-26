@@ -8,7 +8,8 @@ defmodule FsWatch do
   "IsSymLink", "Link", "Overflow"]
 
   def start_link(args, options \\ []) do
-    GenServer.start_link(__MODULE__, args, [name: args[:name]] ++ options)
+    GenServer.start_link __MODULE__, parse_config(args),
+      Keyword.put(options, :name, args[:name] || __MODULE__)
   end
 
   def stop(pid) do
@@ -17,9 +18,9 @@ defmodule FsWatch do
 
   ### GenServer callbacks ###
 
-  def init(args) do
-    start_watcher(args)
-    {:ok, %{folder: args[:folder], callback: args[:callback]}}
+  def init(config) do
+    start_watcher(config)
+    {:ok, config}
   end
 
   def handle_info({_pid, :data, :out, raw}, config) do
@@ -29,7 +30,7 @@ defmodule FsWatch do
       |> Enum.map(&extract_events(&1))
       |> Enum.each(fn(data) ->
         IO.puts(":: watcher :: #{inspect data}")
-        config.callback.(data)
+        if config.callback, do: config.callback.(data)
       end)
     {:noreply, config}
   end
@@ -41,9 +42,16 @@ defmodule FsWatch do
 
   ### Helpers ###
 
-  @spec start_watcher(list) :: none
-  defp start_watcher(args) do
-    folder = args[:folder]
+  defp parse_config(args) do
+    %{
+      folder: args[:folder],
+      callback: args[:callback]
+    }
+  end
+
+  @spec start_watcher(%{}) :: none
+  defp start_watcher(config) do
+    folder = config.folder
     Porcelain.spawn_shell "fswatch -xr #{folder}", out: {:send, self}
     Logger.info ~s(Started watching "#{folder}" folder for changes.)
   end
